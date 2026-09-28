@@ -1,0 +1,460 @@
+import tkinter as tk
+import time
+import threading
+import random
+import math
+
+# Lyrics
+lyrics = [
+        ("Suara ", 0.14, 0.1),
+        ("Hati seorang kekasih ", 0.06, 0.1),
+        ("Bagai ", 0.14, 0.1),
+        ("Nyanyian surgawi ", 0.06, 0.1),
+        ("Takkan berdusta ", 0.12, 0.4),
+        ("Walau ketamakan ", 0.14, 0.2),
+        ("Merajai ", 0.14, 0.2),
+        ("Diri yang penuh emosi ", 0.07, 0.1),
+        ("Jauh ", 0.14, 0.2),
+        ("Di dasar hatiku ", 0.07, 0.2),
+        ("Tetap ku ", 0.12, 0.2),
+        ("Mau ", 0.14, 0.2),
+        ("Kau sebagai ", 0.14, 0.2),
+        ("Kasihku ", 0.24, 0.6),
+]
+
+# ===== JUDUL LAGU =====
+SONG_TITLE = " Suara Hati Seorang Kekasih "
+ARTIST_NAME = " Melly Goeslaw "
+
+root = tk.Tk()
+root.title(SONG_TITLE)
+root.configure(bg="#0B0C16")
+
+# ===== SET TENGAH LAYAR (SETENGAH UKURAN) =====
+window_width = 800
+window_height = 600
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+x = (screen_width // 2) - (window_width // 2)
+y = (screen_height // 2) - (window_height // 2)
+
+root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+root.minsize(600, 400)
+root.maxsize(1200, 800)
+
+# ===== FULL SCREEN TOGGLE =====
+def toggle_fullscreen(event=None):
+    if root.attributes('-fullscreen'):
+        root.attributes('-fullscreen', False)
+        root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+    else:
+        root.attributes('-fullscreen', True)
+root.bind('<F11>', toggle_fullscreen)
+root.bind('<Escape>', toggle_fullscreen)
+
+canvas = tk.Canvas(root, width=window_width, height=window_height, bg="#0B0C16", highlightthickness=0)
+canvas.pack(fill=tk.BOTH, expand=True)
+
+# ===== LABEL LIRIK (UTAMA) =====
+label = tk.Label(root, text="", 
+                 font=("Segoe UI Light", 32, "italic"),
+                 fg="white", 
+                 bg="#0B0C16")
+label.place(relx=0.5, rely=0.45, anchor="center")
+
+# ===== JUDUL LAGU (SUBTITLE - TETAP DITAMPILKAN) =====
+subtitle = tk.Label(root, text=SONG_TITLE, 
+                    font=("Segoe UI Light", 18, "bold"),
+                    fg="#FFD700",  # Warna emas
+                    bg="#0B0C16")
+subtitle.place(relx=0.5, rely=0.15, anchor="center")
+
+# ===== ARTIST NAME =====
+artist_label = tk.Label(root, text=ARTIST_NAME, 
+                        font=("Segoe UI Light", 12, "italic"),
+                        fg="#8888AA",
+                        bg="#0B0C16")
+artist_label.place(relx=0.5, rely=0.20, anchor="center")
+
+# ===== VARIABEL GLOBAL =====
+particles = []
+floating_hearts = []
+sparkles = []
+fireworks = []
+pulse_rings = []
+temp_hearts = []
+
+# ===== 1. BACKGROUND PARTICLES =====
+def create_particles(num=120):
+    for _ in range(num):
+        x = random.randint(0, window_width)
+        y = random.randint(0, window_height)
+        size = random.randint(2, 6)
+        kind = random.choice(["raindrop", "snow", "sparkle", "butterfly", "star"])
+        
+        if kind == "raindrop":
+            length = random.randint(8, 15)
+            shape = canvas.create_line(x, y, x, y+length,
+                                       fill=random.choice(["#87CEFA", "#4682B4", "#B0C4DE"]), width=1)
+            particles.append({"id": shape, "kind": kind, "size": length, "x": x, "y": y})
+        elif kind == "snow":
+            shape = canvas.create_text(x, y, text="❄",
+                                       fill=random.choice(["#FFFFFF", "#F0FFFF", "#D3D3D3"]),
+                                       font=("Helvetica", size))
+            particles.append({"id": shape, "kind": kind, "size": size, "x": x, "y": y, 
+                             "sway": random.uniform(0, 2*math.pi)})
+        elif kind == "sparkle":
+            shape = canvas.create_text(x, y, text="✦",
+                                       fill=random.choice(["#FFD700", "#FF6B6B", "#4D96FF"]),
+                                       font=("Helvetica", size))
+            particles.append({"id": shape, "kind": kind, "size": size, "x": x, "y": y})
+        elif kind == "star":
+            shape = canvas.create_text(x, y, text="⭐",
+                                       fill=random.choice(["#FFD700", "#FFA500", "#FF6347"]),
+                                       font=("Helvetica", size))
+            particles.append({"id": shape, "kind": kind, "size": size, "x": x, "y": y})
+        else:  # butterfly
+            shape = canvas.create_text(x, y, text="🦋",
+                                       fill=random.choice(["#7571B8", "#4F448B", "#FFB6C1"]),
+                                       font=("Helvetica", size+4))
+            particles.append({"id": shape, "kind": kind, "size": size, "x": x, "y": y,
+                             "phase": random.uniform(0, 2*math.pi)})
+
+# ===== 2. FLOATING HEARTS =====
+def create_floating_hearts():
+    for _ in range(12):
+        x = random.randint(0, window_width)
+        y = random.randint(0, window_height)
+        size = random.randint(10, 20)
+        heart = canvas.create_text(x, y, text="♥",
+                                   fill=random.choice(["#FF6B6B", "#FF4757", "#FF3838", "#FF1493"]),
+                                   font=("Helvetica", size))
+        floating_hearts.append({
+            "id": heart,
+            "x": x,
+            "y": y,
+            "size": size,
+            "speed": random.uniform(0.3, 0.8),
+            "phase": random.uniform(0, 2*math.pi),
+            "sway": random.uniform(0.3, 0.8)
+        })
+
+# ===== 3. SPARKLE EFFECT =====
+def create_sparkle(x=None, y=None):
+    if x is None:
+        x = random.randint(50, window_width - 50)
+    if y is None:
+        y = random.randint(50, window_height - 50)
+    
+    colors = ["#FFD700", "#FF6B6B", "#4D96FF", "#6BCB77", "#FF9F43", "#FF6BCB"]
+    for _ in range(10):
+        angle = random.uniform(0, 2*math.pi)
+        distance = random.randint(15, 40)
+        end_x = x + math.cos(angle) * distance
+        end_y = y + math.sin(angle) * distance
+        
+        line = canvas.create_line(x, y, end_x, end_y,
+                                  fill=random.choice(colors),
+                                  width=random.randint(1, 2))
+        sparkles.append({
+            "id": line,
+            "life": 20,
+            "max_life": 20
+        })
+
+# ===== 4. TEMPORARY HEART =====
+def create_temp_heart(x, y):
+    heart = canvas.create_text(x, y, text="♥",
+                               fill=random.choice(["#FF6B6B", "#FF4757", "#FF1493"]),
+                               font=("Helvetica", random.randint(12, 20)))
+    temp_hearts.append({
+        "id": heart,
+        "life": 30,
+        "x": x,
+        "y": y
+    })
+
+# ===== 5. FIREWORK EFFECT =====
+def create_firework(x=None, y=None):
+    if x is None:
+        x = random.randint(100, window_width - 100)
+    if y is None:
+        y = random.randint(100, window_height // 2)
+    
+    colors = ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#FF6BCB", "#FF9F43"]
+    color = random.choice(colors)
+    
+    for _ in range(30):
+        angle = random.uniform(0, 2*math.pi)
+        speed = random.uniform(2, 6)
+        vx = math.cos(angle) * speed
+        vy = math.sin(angle) * speed - 2
+        
+        size = random.randint(2, 4)
+        particle = canvas.create_oval(x, y, x+size, y+size,
+                                      fill=color, outline=color)
+        fireworks.append({
+            "id": particle,
+            "x": x,
+            "y": y,
+            "vx": vx,
+            "vy": vy,
+            "life": 50,
+            "size": size
+        })
+
+# ===== 6. PULSE RING =====
+def create_pulse_ring(x, y):
+    ring = canvas.create_oval(x-10, y-10, x+10, y+10,
+                              outline="#FFD700", width=2)
+    pulse_rings.append({
+        "id": ring,
+        "x": x,
+        "y": y,
+        "size": 10,
+        "life": 50
+    })
+
+# ===== 7. ANIMASI PARTIKEL =====
+def animate_particles():
+    for particle in particles:
+        kind = particle["kind"]
+        
+        if kind == "raindrop":
+            particle["y"] += 3
+            if particle["y"] > window_height:
+                particle["x"] = random.randint(0, window_width)
+                particle["y"] = 0
+            canvas.coords(particle["id"], particle["x"], particle["y"], 
+                         particle["x"], particle["y"] + particle["size"])
+        
+        elif kind == "snow":
+            particle["y"] += 1
+            particle["sway"] += 0.05
+            particle["x"] += math.sin(particle["sway"]) * 0.5
+            if particle["y"] > window_height:
+                particle["x"] = random.randint(0, window_width)
+                particle["y"] = 0
+            canvas.coords(particle["id"], particle["x"], particle["y"])
+        
+        elif kind in ["sparkle", "star"]:
+            particle["y"] += 0.5
+            if particle["y"] > window_height:
+                particle["x"] = random.randint(0, window_width)
+                particle["y"] = 0
+            canvas.coords(particle["id"], particle["x"], particle["y"])
+        
+        elif kind == "butterfly":
+            particle["y"] += 0.5
+            particle["phase"] += 0.05
+            particle["x"] += math.sin(particle["phase"]) * 1.5
+            if particle["y"] > window_height:
+                particle["x"] = random.randint(0, window_width)
+                particle["y"] = 0
+            canvas.coords(particle["id"], particle["x"], particle["y"])
+    
+    root.after(30, animate_particles)
+
+# ===== 8. ANIMASI FLOATING HEARTS =====
+def animate_floating_hearts():
+    for heart in floating_hearts:
+        heart["y"] -= heart["speed"]
+        heart["phase"] += 0.03
+        heart["x"] += math.sin(heart["phase"]) * heart["sway"]
+        
+        if heart["y"] < -50:
+            heart["y"] = window_height + 50
+            heart["x"] = random.randint(0, window_width)
+        
+        size = heart["size"] + math.sin(heart["phase"] * 3) * 3
+        canvas.coords(heart["id"], heart["x"], heart["y"])
+        canvas.itemconfig(heart["id"], font=("Helvetica", int(size)))
+    
+    root.after(50, animate_floating_hearts)
+
+# ===== 9. ANIMASI SPARKLE =====
+def animate_sparkles():
+    for sparkle in sparkles[:]:
+        sparkle["life"] -= 1
+        if sparkle["life"] <= 0:
+            canvas.delete(sparkle["id"])
+            sparkles.remove(sparkle)
+    root.after(50, animate_sparkles)
+
+# ===== 10. ANIMASI TEMPORARY HEARTS =====
+def animate_temp_hearts():
+    for heart in temp_hearts[:]:
+        heart["life"] -= 1
+        if heart["life"] <= 0:
+            canvas.delete(heart["id"])
+            temp_hearts.remove(heart)
+    root.after(50, animate_temp_hearts)
+
+# ===== 11. ANIMASI FIREWORK =====
+def animate_fireworks():
+    for fw in fireworks[:]:
+        fw["x"] += fw["vx"]
+        fw["y"] += fw["vy"]
+        fw["vy"] += 0.1
+        fw["life"] -= 1
+        
+        if fw["life"] <= 0:
+            canvas.delete(fw["id"])
+            fireworks.remove(fw)
+        else:
+            canvas.coords(fw["id"], fw["x"], fw["y"], 
+                         fw["x"] + fw["size"], fw["y"] + fw["size"])
+    
+    root.after(20, animate_fireworks)
+
+# ===== 12. ANIMASI PULSE RING =====
+def animate_pulse_rings():
+    for ring in pulse_rings[:]:
+        ring["size"] += 1.5
+        ring["life"] -= 1
+        
+        if ring["life"] <= 0:
+            canvas.delete(ring["id"])
+            pulse_rings.remove(ring)
+        else:
+            alpha = ring["life"] / 50
+            canvas.coords(ring["id"], 
+                         ring["x"] - ring["size"], ring["y"] - ring["size"],
+                         ring["x"] + ring["size"], ring["y"] + ring["size"])
+            color = f"#{int(255*alpha):02x}{int(215*alpha):02x}{int(0*alpha):02x}"
+            canvas.itemconfig(ring["id"], outline=color)
+    
+    root.after(50, animate_pulse_rings)
+
+# ===== 13. TWINKLE PARTICLES =====
+def twinkle_particles():
+    twinkle_colors = ["#FFD700", "#FF6B6B", "#4D96FF", "#6BCB77", "#FF9F43", "#FF6BCB"]
+    for particle in particles:
+        if particle["kind"] in ["snow", "sparkle", "star"]:
+            if random.random() < 0.3:
+                canvas.itemconfig(particle["id"], fill=random.choice(twinkle_colors))
+    root.after(300, twinkle_particles)
+
+# ===== 14. RAINBOW GLOW EFFECT =====
+def rainbow_glow():
+    colors = ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#9B59B6", "#FF6BCB"]
+    
+    def cycle(i=0):
+        label.config(fg=colors[i % len(colors)])
+        # Subtitle (judul) tetap warna emas
+        # Artist name berubah-ubah soft
+        artist_color = f"#{random.randint(150, 200):02x}{random.randint(150, 200):02x}{random.randint(150, 200):02x}"
+        artist_label.config(fg=artist_color)
+        root.after(200, cycle, i+1)
+    
+    cycle()
+
+# ===== 15. JUDUL BERKEDIP =====
+def title_blink():
+    current_color = subtitle.cget("fg")
+    if current_color == "#FFD700":
+        subtitle.config(fg="#FFA500")  # Orange
+    else:
+        subtitle.config(fg="#FFD700")  # Emas
+    root.after(800, title_blink)
+
+# ===== 16. TYPEWRITER EFFECT =====
+def typewriter_effect():
+    def run():
+        for idx, (line, char_delay, line_delay) in enumerate(lyrics):
+            text = ""
+            
+            for char in line:
+                text += char
+                label.config(text=text)
+                
+                if char == " " and random.random() < 0.2:
+                    x = random.randint(50, window_width - 50)
+                    y = random.randint(50, window_height - 50)
+                    create_sparkle(x, y)
+                
+                if char.lower() in "aeiou" and random.random() < 0.1:
+                    x = random.randint(100, window_width - 100)
+                    y = random.randint(100, window_height - 100)
+                    create_temp_heart(x, y)
+                
+                root.update()
+                time.sleep(char_delay)
+            
+            if random.random() < 0.4:
+                for _ in range(random.randint(1, 2)):
+                    x = random.randint(100, window_width - 100)
+                    y = random.randint(100, window_height // 2)
+                    create_firework(x, y)
+            
+            if random.random() < 0.3:
+                x = random.randint(200, window_width - 200)
+                y = random.randint(200, window_height - 200)
+                create_pulse_ring(x, y)
+            
+            time.sleep(line_delay)
+            
+            # Fade out
+            for i in range(10, 0, -1):
+                try:
+                    val = int(255 * (i / 10))
+                    color = f"#{val:02x}{val:02x}{val:02x}"
+                    label.config(fg=color)
+                    root.update()
+                    time.sleep(0.02)
+                except:
+                    pass
+            
+            label.config(text="")
+            label.config(fg="white")
+    
+    threading.Thread(target=run, daemon=True).start()
+
+# ===== 17. RANDOM EVENT TRIGGER =====
+def random_events():
+    if random.random() < 0.05:
+        x = random.randint(100, window_width - 100)
+        y = random.randint(100, window_height // 2)
+        create_firework(x, y)
+    
+    if random.random() < 0.03:
+        x = random.randint(100, window_width - 100)
+        y = random.randint(100, window_height - 100)
+        create_pulse_ring(x, y)
+        create_sparkle(x, y)
+    
+    root.after(1000, random_events)
+
+# ===== EKSEKUSI SEMUA FUNGSI =====
+create_particles(120)
+create_floating_hearts()
+
+animate_particles()
+animate_floating_hearts()
+animate_sparkles()
+animate_temp_hearts()
+animate_fireworks()
+animate_pulse_rings()
+
+twinkle_particles()
+rainbow_glow()
+title_blink()  # Judul berkedip
+
+root.after(1000, random_events)
+root.after(1000, typewriter_effect)
+
+# ===== INFO DI BAWAH =====
+info_label = tk.Label(root, text="🎄 Press F11 for fullscreen | Q to quit 🎄", 
+                      font=("Segoe UI Light", 11),
+                      fg="#555577", bg="#0B0C16")
+info_label.place(relx=0.5, rely=0.97, anchor="center")
+
+# ===== KEYBOARD SHORTCUT =====
+def quit_app(event=None):
+    root.quit()
+
+root.bind('<q>', quit_app)
+root.bind('<Q>', quit_app)
+
+root.mainloop()
